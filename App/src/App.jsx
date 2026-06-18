@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { buildGroups } from "./lib/groups.js";
+import { resolveBracket, bracketProgress } from "./lib/bracket.js";
+import { knockout } from "./data/knockout.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
 import Flag from "./components/Flag.jsx";
@@ -163,10 +165,11 @@ export default function App() {
       {tab === "games" && <Games results={results} setResult={setResult} you={you} isCommissioner={isCommissioner} canLogin={isShared} onLogin={commishLogin} onLogout={commishLogout} />}
       {tab === "players" && <Players standings={standings} results={results} you={you} setYou={setYou} />}
       {tab === "groups" && <Groups results={results} />}
+      {tab === "bracket" && <Bracket results={results} you={you} />}
       {tab === "rules" && <Rules />}
 
       <nav className="tabbar" aria-label="Sections">
-        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
+        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["bracket", "Cup"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
           <button key={id} className={tab === id ? "active" : ""} aria-current={tab === id} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -551,6 +554,73 @@ function Groups({ results }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ============================== BRACKET (F08) ==============================
+function BracketSlot({ slot }) {
+  if (slot.team) {
+    return (
+      <span className="kslot filled">
+        <Flag team={slot.team} size={18} />
+        <span className="nm">{slot.team}</span>
+      </span>
+    );
+  }
+  return <span className="kslot tbd"><span className="nm">{slot.label}</span></span>;
+}
+
+function Bracket({ results, you }) {
+  const resolved = useMemo(() => {
+    const groups = buildGroups(comp.games, results);
+    return resolveBracket(knockout, groups, comp.games, results);
+  }, [results]);
+  const { filled, total } = useMemo(() => bracketProgress(resolved), [resolved]);
+  const [open, setOpen] = useState(() => ({ r32: true })); // R32 open by default
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <span className="kicker">The road to the final</span>
+        <h1>Knockouts</h1>
+        <p>The bracket auto-fills as each group is decided. {filled}/{total} slots set so far — the rest unlock when the groups finish.</p>
+      </div>
+
+      <ChampionPennant player={you} variant="compact" />
+
+      {resolved.map((round) => {
+        const isOpen = open[round.id] ?? false;
+        return (
+          <div className="slip ko-round" key={round.id}>
+            <button
+              className="slip-head ko-head"
+              aria-expanded={isOpen}
+              onClick={() => setOpen((o) => ({ ...o, [round.id]: !isOpen }))}
+            >
+              <span className="title">{round.title}</span>
+              <span className="tag">
+                <span className="caret">{isOpen ? "▾" : "▸"}</span> {round.matches.length}
+              </span>
+            </button>
+            {isOpen && (
+              <div className="ko-body">
+                {round.matches.map((m) => (
+                  <div className="ko-match" key={m.n}>
+                    <span className="ko-no">{m.n}</span>
+                    <div className="ko-teams">
+                      <BracketSlot slot={m.h} />
+                      <span className="ko-v">v</span>
+                      <BracketSlot slot={m.a} />
+                    </div>
+                    <span className="ko-meta">{m.venue}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -431,3 +431,25 @@ select.picker {
 .grp-pts { font-weight: 700; color: var(--ink) !important; }
 .grp-row.qual { background: var(--bone); box-shadow: inset 3px 0 0 var(--vermillion); }
 .grp-row.qual .grp-pts { color: var(--vermillion) !important; }
+
+/* ---------- F08 — knockout bracket (vertical, display-only) ---------- */
+.ko-round { margin-bottom: 12px; }
+.ko-head { width: 100%; cursor: pointer; background: none; border: none; text-align: left; font: inherit; }
+.ko-head .caret { font-size: 0.85rem; }
+.ko-body { padding: 2px 0; }
+.ko-match {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  padding: 9px 14px; border-bottom: 1px solid var(--rule);
+}
+.ko-match:last-child { border-bottom: none; }
+.ko-no { font-family: "Roboto Mono", monospace; font-size: 0.62rem; font-weight: 700; color: var(--slate); border: 1px solid var(--rule); border-radius: 2px; padding: 2px 5px; }
+.ko-teams { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ko-v { font-family: "Roboto Mono", monospace; font-size: 0.6rem; color: var(--slate); margin-left: 25px; }
+.kslot { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.kslot .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kslot.filled .nm { font-weight: 700; color: var(--ink); font-size: 0.9rem; }
+.kslot.tbd .nm { font-family: "Roboto Mono", monospace; font-size: 0.72rem; color: var(--slate); }
+.ko-meta { font-family: "Roboto Mono", monospace; font-size: 0.6rem; color: var(--slate); text-align: right; white-space: nowrap; }
+
+/* 6-tab nav: tighten so it never overflows 360px */
+.tabbar button { font-size: 0.6rem; letter-spacing: 0.02em; padding: 13px 2px; }
