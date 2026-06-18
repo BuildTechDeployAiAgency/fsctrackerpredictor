@@ -364,3 +364,48 @@ select.picker {
 .empty-pick p { margin: 0; font-size: 0.92rem; }
 .linkish.toggle { display: inline-flex; align-items: center; gap: 5px; }
 .linkish.toggle .caret { font-size: 0.92rem; line-height: 1; }
+
+/* ---------- F04 — champion-pick flag art (display only) ---------- */
+.pennant {
+  position: relative; overflow: hidden;
+  border: 2px solid var(--ink); border-radius: 3px; background: var(--bone-2);
+  margin-bottom: 16px; padding: 16px 18px; min-height: 92px;
+}
+.pennant-bg {
+  position: absolute; top: 50%; right: -14%; width: 62%; height: 150%;
+  transform: translateY(-50%) rotate(-12deg);
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  opacity: 0.22; border-radius: 6px; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to left, #000 35%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 35%, transparent 100%);
+  animation: pennant-drift 9s ease-in-out infinite alternate;
+}
+@keyframes pennant-drift {
+  from { transform: translateY(-50%) rotate(-12deg) translateX(0); }
+  to   { transform: translateY(-50%) rotate(-12deg) translateX(-10px); }
+}
+@media (prefers-reduced-motion: reduce) { .pennant-bg { animation: none; } }
+.pennant-body { position: relative; z-index: 1; }
+.pennant-kicker {
+  display: block; font-family: "Roboto Mono", monospace; font-size: 0.6rem;
+  font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--vermillion);
+}
+.pennant-champ-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.pennant-champ {
+  font-family: "Archivo", system-ui, sans-serif; font-weight: 800;
+  font-size: 1.5rem; line-height: 1; color: var(--ink); letter-spacing: -0.01em;
+}
+.pennant-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pennant-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--rule); border-radius: 2px; padding: 3px 7px; background: var(--bone);
+}
+.pennant-chip-l { font-family: "Roboto Mono", monospace; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); }
+.pennant-chip-t { font-size: 0.74rem; font-weight: 600; color: var(--ink); }
+/* compact ribbon (Board "you" footer) */
+.pennant--compact {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  min-height: 0; padding: 9px 14px; margin: 10px auto 0; max-width: max-content;
+}
+.pennant--compact .pennant-kicker { display: inline; }
+.pennant--compact .pennant-champ { font-size: 0.92rem; }

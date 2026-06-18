@@ -4,6 +4,7 @@ import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
 import Flag from "./components/Flag.jsx";
+import ChampionPennant from "./components/ChampionPennant.jsx";
 
 const comp = getCompetition();
 const TOTAL = comp.meta.totalGames || comp.games.length;
@@ -225,6 +226,7 @@ function Board({ standings, youRow, you, setYou, played, goals }) {
           You ({you}) · #{youRow.rank} of {standings.length} · {youRow.pts} pts
         </p>
       )}
+      <ChampionPennant player={you} variant="compact" />
     </div>
   );
 }
@@ -481,6 +483,7 @@ function Players({ standings, results, you, setYou }) {
 
       {row && (
         <>
+          <ChampionPennant player={sel} />
           <div className="tiles">
             <div className="tile"><div className="v">{row.pts}</div><div className="l">Points</div></div>
             <div className="tile"><div className="v">#{row.rank}</div><div className="l">Rank</div></div>
