@@ -16,3 +16,6 @@ dist/
 .DS_Store
 **/.DS_Store
 .vercel
+
+# internal docs / showcase (not shipped)
+Documentation/

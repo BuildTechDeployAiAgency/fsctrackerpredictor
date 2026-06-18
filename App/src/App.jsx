@@ -3,6 +3,7 @@ import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
+import Flag from "./components/Flag.jsx";
 
 const comp = getCompetition();
 const TOTAL = comp.meta.totalGames || comp.games.length;
@@ -140,6 +141,9 @@ export default function App() {
       <header className="masthead">
         <div className="masthead-top">
           <div className="wordmark"><span className="dot" aria-hidden="true" />{comp.meta.name.replace(" 2026 pool", "").replace("'s World Cup Pool 2026", "")}<span style={{ color: "var(--vermillion)" }}>'26</span></div>
+          <span className="whoami mono" title="You — tap a name on the Table to change">
+            <span className="whoami-l">YOU</span>{you}
+          </span>
           <button className="linkish exit" onClick={exitPool} title="Back to the cover">Exit</button>
         </div>
         <div className="sub mono">
@@ -315,11 +319,26 @@ function CommishBar({ isCommissioner, onLogin, onLogout }) {
 function GameCard({ g, result, setResult, youIdx, canEdit }) {
   const [editing, setEditing] = useState(false);
   const [showPicks, setShowPicks] = useState(false);
+  const [showSim, setShowSim] = useState(false);
+  const [simH, setSimH] = useState("");
+  const [simA, setSimA] = useState("");
   const [eh, setEh] = useState(result ? String(result[0]) : "");
   const [ea, setEa] = useState(result ? String(result[1]) : "");
 
   const pick = g.p[youIdx];
   const sc = result ? scoreOne(pick, result, TIERS) : null;
+
+  // What-if simulator (read-only, never writes). Scores YOUR pick against a
+  // hypothetical scoreline AND tallies how the whole pool would score it.
+  const simResult = simH !== "" && simA !== "" ? [parseInt(simH, 10), parseInt(simA, 10)] : null;
+  const simSc = simResult ? scoreOne(pick, simResult, TIERS) : null;
+  const simDist = simResult
+    ? comp.players.reduce((acc, _, i) => {
+        const t = scoreOne(g.p[i], simResult, TIERS).tier;
+        acc[t] = (acc[t] || 0) + 1;
+        return acc;
+      }, {})
+    : null;
   const save = () => {
     if (eh === "" || ea === "") return;
     setResult(g.n, [parseInt(eh, 10), parseInt(ea, 10)]);
@@ -333,9 +352,9 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
         <span className="gmeta">GAME {g.n} · {fmtDate(g.d)}</span>
       </div>
       <div className="match-row">
-        <span className="team"><span className="crest" aria-hidden="true">{crest(g.h)}</span><span className="nm">{g.h}</span></span>
+        <span className="team"><Flag team={g.h} /><span className="nm">{g.h}</span></span>
         <span className={`score-box${result ? "" : " empty"}`}>{result ? `${result[0]} – ${result[1]}` : "– –"}</span>
-        <span className="team away"><span className="nm">{g.a}</span><span className="crest" aria-hidden="true">{crest(g.a)}</span></span>
+        <span className="team away"><span className="nm">{g.a}</span><Flag team={g.a} /></span>
       </div>
 
       <div className="game-foot">
@@ -350,9 +369,33 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
         <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sc && <span className={`pts-chip${sc.tier === "exact" ? " exact" : sc.tier === "result" ? " win" : ""}`}>+{sc.pts}</span>}
           {canEdit && <button className="linkish" onClick={() => setEditing((v) => !v)}>{result ? "Edit" : "Set result"}</button>}
+          <button className="linkish" onClick={() => setShowSim((v) => !v)}>{showSim ? "Hide" : "What if"}</button>
           <button className="linkish" onClick={() => setShowPicks((v) => !v)}>{showPicks ? "Hide" : "All picks"}</button>
         </span>
       </div>
+
+      {showSim && (
+        <div className="sim">
+          <div className="sim-row">
+            <span className="sim-kicker">WHAT IF</span>
+            <span className="team-sm">{crest(g.h)}</span>
+            <input type="number" inputMode="numeric" min="0" value={simH} onChange={(e) => setSimH(e.target.value)} aria-label={`${g.h} hypothetical goals`} />
+            <span className="mono">–</span>
+            <input type="number" inputMode="numeric" min="0" value={simA} onChange={(e) => setSimA(e.target.value)} aria-label={`${g.a} hypothetical goals`} />
+            <span className="team-sm">{crest(g.a)}</span>
+            {simSc
+              ? <span className={`pts-chip${simSc.tier === "exact" ? " exact" : simSc.tier === "result" ? " win" : ""}`} style={{ marginLeft: "auto" }}>you +{simSc.pts}</span>
+              : <span className="sim-hint">enter a score</span>}
+          </div>
+          {simDist && (
+            <div className="sim-dist">
+              <span className="dchip exact"><b>{simDist.exact || 0}</b> exact ·5</span>
+              <span className="dchip win"><b>{simDist.result || 0}</b> result ·3</span>
+              <span className="dchip"><b>{simDist.miss || 0}</b> miss ·0</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {canEdit && editing && (
         <div className="editor">
