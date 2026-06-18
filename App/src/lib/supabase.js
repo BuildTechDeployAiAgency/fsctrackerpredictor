@@ -36,20 +36,34 @@ export async function fetchResults() {
   return out;
 }
 
-/** Insert/update one game's score. Returns true on success. */
-export async function upsertResult(gameNo, [home, away]) {
+// ---- Commissioner-gated writes ----
+// Direct table writes are blocked by RLS. These go through SECURITY DEFINER
+// RPCs that require the commissioner passcode (validated server-side).
+
+/** True if the passcode matches the stored commissioner passcode. */
+export async function verifyCommissioner(passcode) {
   if (!supabase) return false;
-  const { error } = await supabase
-    .from(TABLE)
-    .upsert({ game_no: gameNo, home, away }, { onConflict: "game_no" });
+  const { data, error } = await supabase.rpc("verify_commissioner", { p_passcode: passcode });
+  if (error) throw error;
+  return data === true;
+}
+
+/** Insert/update one game's score. Requires the commissioner passcode. */
+export async function upsertResult(gameNo, [home, away], passcode) {
+  if (!supabase) return false;
+  const { error } = await supabase.rpc("set_result", {
+    p_game_no: gameNo, p_home: home, p_away: away, p_passcode: passcode || "",
+  });
   if (error) throw error;
   return true;
 }
 
-/** Remove one game's score (clearing a result). */
-export async function deleteResult(gameNo) {
+/** Remove one game's score. Requires the commissioner passcode. */
+export async function deleteResult(gameNo, passcode) {
   if (!supabase) return false;
-  const { error } = await supabase.from(TABLE).delete().eq("game_no", gameNo);
+  const { error } = await supabase.rpc("clear_result", {
+    p_game_no: gameNo, p_passcode: passcode || "",
+  });
   if (error) throw error;
   return true;
 }

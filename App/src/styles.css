@@ -320,3 +320,12 @@ select.picker {
   .lp-menu .btn { margin-top: 10px; justify-content: center; }
   .lp-hamburger { display: flex; }
 }
+
+/* ---------- Commissioner bar (Games tab) ---------- */
+.commish-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; border: 2px solid var(--ink); border-radius: 3px; background: var(--bone-2); padding: 8px 12px; margin-bottom: 16px; }
+.commish-bar.on { border-color: var(--field); background: rgba(11,93,59,0.06); }
+.commish-tag { font-family: "Roboto Mono", monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--field); }
+.commish-tag.muted { color: var(--slate); }
+.commish-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.commish-form input { font-family: "Roboto Mono", monospace; font-size: 0.9rem; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 3px; background: var(--bone); color: var(--ink); flex: 1; min-width: 0; }
+.commish-err { color: var(--vermillion); font-size: 0.78rem; font-weight: 600; width: 100%; }

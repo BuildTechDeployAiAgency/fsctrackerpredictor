@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
-import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults } from "./lib/supabase.js";
+import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
 
 const comp = getCompetition();
@@ -16,6 +16,7 @@ const LS = {
   results: "fwc_results",
   you: "fwc_you",
   entered: "fwc_entered",
+  commish: "fwc_commish",
 };
 const loadResults = () => {
   try {
@@ -33,6 +34,10 @@ export default function App() {
   const [sync, setSync] = useState(isShared ? "syncing" : "local");
   // Gate: show the landing page until the player enters (passcode + name).
   const [entered, setEntered] = useState(() => localStorage.getItem(LS.entered) === "1");
+  // Commissioner passcode (only the commissioner can enter results). Held in
+  // memory + localStorage, sent on each write; never shipped in the bundle.
+  const [commishPass, setCommishPass] = useState(() => localStorage.getItem(LS.commish) || "");
+  const isCommissioner = isShared ? !!commishPass : true; // offline/no-backend = editable locally
 
   // Keep a ref of the latest results so the realtime handler can merge safely.
   const resultsRef = useRef(results);
@@ -54,6 +59,16 @@ export default function App() {
     setEntered(false);
     setTab("board");
   };
+
+  // Commissioner unlock: verify the passcode server-side before storing it.
+  const commishLogin = async (pass) => {
+    try {
+      const ok = await verifyCommissioner(pass);
+      if (ok) { setCommishPass(pass); localStorage.setItem(LS.commish, pass); }
+      return ok;
+    } catch { return false; }
+  };
+  const commishLogout = () => { setCommishPass(""); localStorage.removeItem(LS.commish); };
 
   // Shared backend: hydrate from Supabase on load, then subscribe to live edits.
   useEffect(() => {
@@ -98,16 +113,21 @@ export default function App() {
       return next;
     });
     if (!isShared) return;
-    const op = score ? upsertResult(n, score) : deleteResult(n);
+    const op = score ? upsertResult(n, score, commishPass) : deleteResult(n, commishPass);
     Promise.resolve(op)
       .then(() => setSync("live"))
       .catch(async (e) => {
         console.error("[pool] write failed, re-syncing", e);
+        // Passcode rejected (or revoked): drop commissioner mode so the UI locks.
+        if (e && (e.code === "42501" || /unauthor/i.test(e.message || ""))) {
+          commishLogout();
+          alert("Commissioner passcode rejected. Results are locked.");
+        }
         try {
           const remote = await fetchResults();
           if (remote) setResults(remote);
         } catch {}
-        setSync("local");
+        setSync("live");
       });
   };
 
@@ -134,7 +154,7 @@ export default function App() {
       </header>
 
       {tab === "board" && <Board standings={standings} youRow={youRow} you={you} setYou={setYou} played={played} goals={goals} />}
-      {tab === "games" && <Games results={results} setResult={setResult} you={you} />}
+      {tab === "games" && <Games results={results} setResult={setResult} you={you} isCommissioner={isCommissioner} canLogin={isShared} onLogin={commishLogin} onLogout={commishLogout} />}
       {tab === "players" && <Players standings={standings} results={results} you={you} setYou={setYou} />}
       {tab === "rules" && <Rules />}
 
@@ -208,7 +228,7 @@ function Board({ standings, youRow, you, setYou, played, goals }) {
 // ============================== GAMES ==============================
 const FILTERS = [["all", "All"], ["played", "Played"], ["upcoming", "Upcoming"]];
 
-function Games({ results, setResult, you }) {
+function Games({ results, setResult, you, isCommissioner, canLogin, onLogin, onLogout }) {
   const [filter, setFilter] = useState("all");
   const youIdx = comp.players.indexOf(you);
 
@@ -222,8 +242,12 @@ function Games({ results, setResult, you }) {
       <div className="page-head">
         <span className="kicker">Fixtures &amp; results</span>
         <h1>Games</h1>
-        <p>All 72 group fixtures. Enter results as they come in — your picks are scored automatically.</p>
+        <p>{isCommissioner
+          ? "All 72 group fixtures. Enter results as they come in — everyone's picks score automatically."
+          : "All 72 group fixtures. Results are entered by the commissioner; the board updates live."}</p>
       </div>
+
+      {canLogin && <CommishBar isCommissioner={isCommissioner} onLogin={onLogin} onLogout={onLogout} />}
 
       <div className="status" style={{ gap: 6, justifyContent: "flex-start" }}>
         {FILTERS.map(([id, label]) => (
@@ -234,13 +258,61 @@ function Games({ results, setResult, you }) {
       </div>
 
       {list.map((g) => (
-        <GameCard key={g.n} g={g} result={results[g.n]} setResult={setResult} youIdx={youIdx} />
+        <GameCard key={g.n} g={g} result={results[g.n]} setResult={setResult} youIdx={youIdx} canEdit={isCommissioner} />
       ))}
     </div>
   );
 }
 
-function GameCard({ g, result, setResult, youIdx }) {
+// Commissioner unlock / status strip on the Games tab.
+function CommishBar({ isCommissioner, onLogin, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const [pass, setPass] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setErr("");
+    const ok = await onLogin(pass.trim());
+    setBusy(false);
+    if (ok) { setOpen(false); setPass(""); }
+    else setErr("Wrong commissioner passcode.");
+  };
+
+  if (isCommissioner) {
+    return (
+      <div className="commish-bar on">
+        <span className="commish-tag">⚑ Commissioner — you can enter results</span>
+        <button className="linkish" onClick={onLogout}>Lock</button>
+      </div>
+    );
+  }
+  return (
+    <div className="commish-bar">
+      {!open ? (
+        <>
+          <span className="commish-tag muted">🔒 Results locked — commissioner only</span>
+          <button className="linkish" onClick={() => setOpen(true)}>Unlock</button>
+        </>
+      ) : (
+        <form className="commish-form" onSubmit={submit}>
+          <input
+            type="password" autoComplete="off" autoFocus
+            value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }}
+            placeholder="Commissioner passcode"
+            aria-label="Commissioner passcode"
+          />
+          <button className="btn sm" type="submit" disabled={busy}>{busy ? "…" : "Unlock"}</button>
+          <button type="button" className="linkish" onClick={() => { setOpen(false); setErr(""); }}>Cancel</button>
+          {err && <span className="commish-err">{err}</span>}
+        </form>
+      )}
+    </div>
+  );
+}
+
+function GameCard({ g, result, setResult, youIdx, canEdit }) {
   const [editing, setEditing] = useState(false);
   const [showPicks, setShowPicks] = useState(false);
   const [eh, setEh] = useState(result ? String(result[0]) : "");
@@ -277,12 +349,12 @@ function GameCard({ g, result, setResult, youIdx }) {
         </span>
         <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sc && <span className={`pts-chip${sc.tier === "exact" ? " exact" : sc.tier === "result" ? " win" : ""}`}>+{sc.pts}</span>}
-          <button className="linkish" onClick={() => setEditing((v) => !v)}>{result ? "Edit" : "Set result"}</button>
+          {canEdit && <button className="linkish" onClick={() => setEditing((v) => !v)}>{result ? "Edit" : "Set result"}</button>}
           <button className="linkish" onClick={() => setShowPicks((v) => !v)}>{showPicks ? "Hide" : "All picks"}</button>
         </span>
       </div>
 
-      {editing && (
+      {canEdit && editing && (
         <div className="editor">
           <input type="number" inputMode="numeric" min="0" value={eh} onChange={(e) => setEh(e.target.value)} aria-label={`${g.h} goals`} />
           <span className="mono">–</span>
