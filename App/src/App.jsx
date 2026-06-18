@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults } from "./lib/supabase.js";
+import Landing from "./Landing.jsx";
 
 const comp = getCompetition();
 const TOTAL = comp.meta.totalGames || comp.games.length;
@@ -14,6 +15,7 @@ const fmtDate = (d) =>
 const LS = {
   results: "fwc_results",
   you: "fwc_you",
+  entered: "fwc_entered",
 };
 const loadResults = () => {
   try {
@@ -29,6 +31,8 @@ export default function App() {
   const [you, setYou] = useState(() => localStorage.getItem(LS.you) || comp.meta.highlightPlayer || comp.players[0]);
   // "live"  = synced with the shared DB · "local" = offline / no backend · "syncing" = first load
   const [sync, setSync] = useState(isShared ? "syncing" : "local");
+  // Gate: show the landing page until the player enters (passcode + name).
+  const [entered, setEntered] = useState(() => localStorage.getItem(LS.entered) === "1");
 
   // Keep a ref of the latest results so the realtime handler can merge safely.
   const resultsRef = useRef(results);
@@ -39,6 +43,17 @@ export default function App() {
     try { localStorage.setItem(LS.results, JSON.stringify(results)); } catch {}
   }, [results]);
   useEffect(() => { localStorage.setItem(LS.you, you); }, [you]);
+
+  const enterPool = (name) => {
+    if (name) setYou(name);
+    localStorage.setItem(LS.entered, "1");
+    setEntered(true);
+  };
+  const exitPool = () => {
+    localStorage.removeItem(LS.entered);
+    setEntered(false);
+    setTab("board");
+  };
 
   // Shared backend: hydrate from Supabase on load, then subscribe to live edits.
   useEffect(() => {
@@ -96,10 +111,17 @@ export default function App() {
       });
   };
 
+  if (!entered) {
+    return <Landing comp={comp} standings={standings} defaultName={you} onEnter={enterPool} />;
+  }
+
   return (
     <div className="app">
       <header className="masthead">
-        <div className="wordmark"><span className="dot" aria-hidden="true" />{comp.meta.name.replace(" 2026 pool", "").replace("'s World Cup Pool 2026", "")}<span style={{ color: "var(--vermillion)" }}>'26</span></div>
+        <div className="masthead-top">
+          <div className="wordmark"><span className="dot" aria-hidden="true" />{comp.meta.name.replace(" 2026 pool", "").replace("'s World Cup Pool 2026", "")}<span style={{ color: "var(--vermillion)" }}>'26</span></div>
+          <button className="linkish exit" onClick={exitPool} title="Back to the cover">Exit</button>
+        </div>
         <div className="sub mono">
           EST. 1996 · {comp.players.length} players · $3,900 pool
           {isShared && (

@@ -235,3 +235,88 @@ select.picker {
 @media (min-width: 760px) {
   .app { border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
 }
+
+/* ============================================================
+   LANDING PAGE — Sports Almanac marketing cover + entry gate.
+   Reuses .slip/.lb-row/.btn/.display/.kicker from the app theme.
+   ============================================================ */
+.landing { color: var(--ink); }
+.landing .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.landing .red { color: var(--vermillion); }
+.landing .display { font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 900; line-height: 0.96; letter-spacing: -0.01em; text-transform: uppercase; }
+
+/* nav */
+.lp-nav { position: sticky; top: 0; z-index: 50; background: rgba(244,239,230,0.92); backdrop-filter: saturate(120%) blur(6px); border-bottom: 2px solid var(--ink); }
+.lp-nav-inner { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.lp-wordmark { display: inline-flex; align-items: center; gap: 9px; font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 900; font-size: 1.25rem; letter-spacing: -0.02em; text-transform: uppercase; }
+.lp-menu { display: flex; align-items: center; gap: 22px; }
+.lp-menu a { font-size: 0.9rem; font-weight: 500; color: var(--ink); padding: 6px 2px; border-bottom: 2px solid transparent; cursor: pointer; }
+.lp-menu a:hover, .lp-menu a:focus-visible { border-color: var(--vermillion); }
+.lp-hamburger { display: none; background: none; border: 2px solid var(--ink); border-radius: 2px; width: 42px; height: 42px; cursor: pointer; align-items: center; justify-content: center; }
+.lp-hamburger span, .lp-hamburger span::before, .lp-hamburger span::after { display: block; width: 18px; height: 2px; background: var(--ink); position: relative; }
+.lp-hamburger span::before, .lp-hamburger span::after { content: ""; position: absolute; left: 0; }
+.lp-hamburger span::before { top: -6px; } .lp-hamburger span::after { top: 6px; }
+
+/* hero */
+.lp-hero { padding: 48px 0 36px; border-bottom: 2px solid var(--ink); }
+.lp-hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 44px; align-items: center; }
+.lp-hero h1 { margin: 12px 0 0; font-size: clamp(1.95rem, 8.5vw, 5.2rem); overflow-wrap: break-word; }
+.lp-hero .lede { font-size: 1.08rem; max-width: 46ch; margin: 20px 0 26px; color: var(--ink); }
+.lp-hero .lede em { font-style: italic; color: var(--field); font-weight: 600; }
+.lp-hero-cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.lp-hero-stats { display: flex; gap: 26px; margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.stat .n { font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 900; font-size: 1.7rem; line-height: 1; }
+.stat .l { font-size: 0.72rem; color: var(--slate); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 5px; }
+
+/* sections */
+.lp-sec { padding: 56px 0; border-bottom: 2px solid var(--ink); }
+.sec-head { max-width: 60ch; margin-bottom: 32px; }
+.sec-head h2 { font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 900; text-transform: uppercase; font-size: clamp(1.7rem, 6vw, 2.7rem); line-height: 1; margin: 8px 0 0; letter-spacing: -0.01em; }
+.sec-head p { color: var(--slate); font-size: 1rem; margin-top: 12px; }
+
+.lp-cols { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); background: var(--bone-2); }
+.lp-col { padding: 24px 20px; border-right: 1px solid var(--ink); }
+.lp-col:last-child { border-right: none; }
+.lp-col .no { font-family: "Roboto Mono", monospace; font-size: 0.74rem; color: var(--vermillion); font-weight: 700; letter-spacing: 0.1em; }
+.lp-col h3 { font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 800; text-transform: uppercase; font-size: 1.15rem; margin: 8px 0 6px; line-height: 1.05; }
+.lp-col p { color: var(--slate); font-size: 0.92rem; margin: 0; }
+
+.lp-pricecols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* final cta + footer */
+.lp-cta-final { background: var(--ink); color: var(--bone); text-align: center; padding: 60px 0; }
+.lp-cta-final h2 { font-family: "Archivo Expanded", "Archivo", sans-serif; font-weight: 900; text-transform: uppercase; font-size: clamp(2rem, 8vw, 3.8rem); line-height: 0.98; margin: 8px auto 0; max-width: 16ch; }
+.lp-cta-final p { color: rgba(244,239,230,0.72); max-width: 46ch; margin: 16px auto 26px; font-size: 1.04rem; }
+.lp-cta-final .btn { background: var(--vermillion); border-color: var(--bone); }
+.lp-footer { background: var(--ink); color: rgba(244,239,230,0.6); padding: 26px 0; }
+.lp-foot-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.8rem; }
+.lp-foot-inner .lp-wordmark { color: var(--bone); font-size: 1rem; }
+.lp-foot-inner .mono { color: rgba(244,239,230,0.5); }
+
+/* entry gate modal */
+.gate-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(22,20,18,0.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.gate { width: 100%; max-width: 380px; background: var(--bone); }
+.gate-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.gate-field { display: flex; flex-direction: column; gap: 6px; }
+.gate-label { font-family: "Roboto Mono", monospace; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); }
+.gate-field input { font-family: "Roboto Mono", monospace; font-size: 1rem; padding: 11px 12px; border: 2px solid var(--ink); border-radius: 3px; background: var(--bone); color: var(--ink); width: 100%; }
+.gate-err { color: var(--vermillion); font-size: 0.84rem; font-weight: 600; margin: 0; }
+.gate-note { color: var(--slate); font-size: 0.74rem; text-align: center; margin: 0; }
+
+/* masthead exit (inside the app) */
+.masthead-top { display: flex; align-items: center; justify-content: space-between; }
+.linkish.exit { color: var(--slate); }
+
+/* landing responsive */
+@media (max-width: 820px) {
+  .lp-hero-grid { grid-template-columns: 1fr; gap: 30px; }
+  .lp-cols { grid-template-columns: 1fr; }
+  .lp-col { border-right: none; border-bottom: 1px solid var(--ink); }
+  .lp-col:last-child { border-bottom: none; }
+  .lp-pricecols { grid-template-columns: 1fr; }
+  .lp-menu { position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; background: var(--bone); border-bottom: 2px solid var(--ink); padding: 6px 20px 16px; display: none; }
+  .lp-menu.open { display: flex; }
+  .lp-menu a { padding: 13px 0; border-bottom: 1px solid var(--rule); }
+  .lp-menu .btn { margin-top: 10px; justify-content: center; }
+  .lp-hamburger { display: flex; }
+}
