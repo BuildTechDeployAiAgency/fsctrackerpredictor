@@ -70,6 +70,14 @@ body {
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(230,57,32,.45); } 70% { box-shadow: 0 0 0 9px rgba(230,57,32,0); } 100% { box-shadow: 0 0 0 0 rgba(230,57,32,0); } }
 @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 .masthead .sub { color: var(--slate); font-size: 0.78rem; margin-top: 3px; }
+.synctag { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; padding: 1px 5px; border-radius: 3px; border: 1px solid var(--rule); vertical-align: middle; }
+.synctag .live { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.synctag.live { color: var(--field); border-color: var(--field); }
+.synctag.live .live { background: var(--field); animation: pulse 2.4s infinite; }
+.synctag.syncing { color: var(--slate); }
+.synctag.syncing .live { background: var(--slate); }
+.synctag.local { color: var(--slate); }
+.synctag.local .live { background: var(--slate); }
 
 .page { padding: 18px 18px 8px; }
 .page-head { margin-bottom: 16px; }

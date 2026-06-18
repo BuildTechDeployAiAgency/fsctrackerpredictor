@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
+import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults } from "./lib/supabase.js";
 
 const comp = getCompetition();
 const TOTAL = comp.meta.totalGames || comp.games.length;
@@ -26,11 +27,43 @@ export default function App() {
   const [tab, setTab] = useState("board");
   const [results, setResults] = useState(loadResults);
   const [you, setYou] = useState(() => localStorage.getItem(LS.you) || comp.meta.highlightPlayer || comp.players[0]);
+  // "live"  = synced with the shared DB · "local" = offline / no backend · "syncing" = first load
+  const [sync, setSync] = useState(isShared ? "syncing" : "local");
 
+  // Keep a ref of the latest results so the realtime handler can merge safely.
+  const resultsRef = useRef(results);
+  useEffect(() => { resultsRef.current = results; }, [results]);
+
+  // localStorage stays as an instant-paint cache + offline fallback.
   useEffect(() => {
     try { localStorage.setItem(LS.results, JSON.stringify(results)); } catch {}
   }, [results]);
   useEffect(() => { localStorage.setItem(LS.you, you); }, [you]);
+
+  // Shared backend: hydrate from Supabase on load, then subscribe to live edits.
+  useEffect(() => {
+    if (!isShared) return;
+    let unsub = () => {};
+    let active = true;
+    (async () => {
+      try {
+        const remote = await fetchResults();
+        if (!active) return;
+        if (remote) setResults(remote);
+        setSync("live");
+      } catch (e) {
+        console.error("[pool] initial fetch failed, using local cache", e);
+        if (!active) return;
+        setSync("local");
+      }
+      if (!active) return; // effect was torn down mid-fetch (StrictMode) — don't subscribe
+      unsub = subscribeResults(
+        () => resultsRef.current,
+        (next) => setResults(next)
+      );
+    })();
+    return () => { active = false; unsub(); };
+  }, []);
 
   const standings = useMemo(() => buildStandings(comp, results), [results]);
   const youRow = standings.find((r) => r.name === you);
@@ -40,19 +73,42 @@ export default function App() {
     [results]
   );
 
-  const setResult = (n, score) =>
+  // Optimistic local update, then persist to the shared DB (if enabled).
+  // On failure we re-pull from the server so no phone is left out of sync.
+  const setResult = (n, score) => {
     setResults((prev) => {
       const next = { ...prev };
       if (score) next[n] = score;
       else delete next[n];
       return next;
     });
+    if (!isShared) return;
+    const op = score ? upsertResult(n, score) : deleteResult(n);
+    Promise.resolve(op)
+      .then(() => setSync("live"))
+      .catch(async (e) => {
+        console.error("[pool] write failed, re-syncing", e);
+        try {
+          const remote = await fetchResults();
+          if (remote) setResults(remote);
+        } catch {}
+        setSync("local");
+      });
+  };
 
   return (
     <div className="app">
       <header className="masthead">
         <div className="wordmark"><span className="dot" aria-hidden="true" />{comp.meta.name.replace(" 2026 pool", "").replace("'s World Cup Pool 2026", "")}<span style={{ color: "var(--vermillion)" }}>'26</span></div>
-        <div className="sub mono">EST. 1996 · {comp.players.length} players · $3,900 pool</div>
+        <div className="sub mono">
+          EST. 1996 · {comp.players.length} players · $3,900 pool
+          {isShared && (
+            <span className={`synctag ${sync}`} title={sync === "live" ? "Shared board · live for everyone" : sync === "syncing" ? "Connecting…" : "Offline — showing this device's copy"}>
+              <span className="live" aria-hidden="true" />
+              {sync === "live" ? "LIVE" : sync === "syncing" ? "SYNC" : "LOCAL"}
+            </span>
+          )}
+        </div>
       </header>
 
       {tab === "board" && <Board standings={standings} youRow={youRow} you={you} setYou={setYou} played={played} goals={goals} />}
