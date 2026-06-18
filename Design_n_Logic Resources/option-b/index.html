@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pundit — Call it. Score it. Never let them forget it.</title>
+<meta name="description" content="Pundit runs your sports prediction pool by your house rules. Pick the scores, call the upsets, settle who actually knows ball." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Archivo+Expanded:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bone:#F4EFE6;
+    --bone-2:#EDE6D8;
+    --ink:#161412;
+    --ink-90:rgba(22,20,18,.9);
+    --vermillion:#E63920;
+    --field:#0B5D3B;
+    --gold:#C9982E;
+    --slate:#6B6256;
+    --rule:rgba(22,20,18,.14);
+    --shadow:0 2px 0 rgba(22,20,18,.08), 0 18px 40px -28px rgba(22,20,18,.55);
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  body{
+    margin:0;
+    background:var(--bone);
+    color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    /* subtle paper grain */
+    background-image:
+      radial-gradient(rgba(22,20,18,.022) 1px, transparent 1px);
+    background-size:3px 3px;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+  .kicker{
+    font-family:"Roboto Mono",monospace;
+    font-size:.72rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--slate);
+  }
+  .display{
+    font-family:"Archivo Expanded","Archivo",sans-serif;
+    font-weight:900;line-height:.96;letter-spacing:-.01em;
+    text-transform:uppercase;
+  }
+  .mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums;}
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:100;
+    background:rgba(244,239,230,.92);
+    backdrop-filter:saturate(120%) blur(6px);
+    border-bottom:2px solid var(--ink);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:66px;}
+  .wordmark{display:flex;align-items:center;gap:10px;font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:-.02em;text-transform:uppercase;}
+  .dot{width:13px;height:13px;border-radius:50%;background:var(--vermillion);display:inline-block;box-shadow:0 0 0 0 rgba(230,57,32,.5);animation:pulse 2.4s ease-out infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(230,57,32,.45);}70%{box-shadow:0 0 0 9px rgba(230,57,32,0);}100%{box-shadow:0 0 0 0 rgba(230,57,32,0);}}
+  @media (prefers-reduced-motion:reduce){.dot{animation:none;}}
+  nav.menu{display:flex;align-items:center;gap:30px;}
+  nav.menu a{font-size:.92rem;font-weight:500;color:var(--ink);padding:6px 2px;border-bottom:2px solid transparent;transition:border-color .2s ease,color .2s ease;}
+  nav.menu a:hover,nav.menu a:focus-visible{border-color:var(--vermillion);}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+    font-family:"Inter",sans-serif;font-weight:700;font-size:.95rem;
+    padding:12px 20px;border-radius:2px;border:2px solid var(--ink);
+    background:var(--vermillion);color:var(--bone);
+    transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
+    text-transform:uppercase;letter-spacing:.02em;line-height:1;
+  }
+  .btn:hover,.btn:focus-visible{transform:translateY(-2px);box-shadow:4px 4px 0 var(--ink);}
+  .btn.ghost{background:transparent;color:var(--ink);}
+  .btn.ghost:hover,.btn.ghost:focus-visible{background:var(--ink);color:var(--bone);}
+  .btn.sm{padding:10px 16px;font-size:.85rem;}
+  .hamburger{display:none;background:none;border:2px solid var(--ink);border-radius:2px;width:44px;height:44px;cursor:pointer;align-items:center;justify-content:center;}
+  .hamburger span{display:block;width:20px;height:2px;background:var(--ink);position:relative;}
+  .hamburger span::before,.hamburger span::after{content:"";position:absolute;left:0;width:20px;height:2px;background:var(--ink);}
+  .hamburger span::before{top:-6px;}.hamburger span::after{top:6px;}
+
+  *:focus-visible{outline:3px solid var(--field);outline-offset:2px;}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:64px 0 40px;border-bottom:2px solid var(--ink);position:relative;}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:54px;align-items:center;}
+  .hero h1{margin:14px 0 0;font-size:clamp(3rem,7.2vw,6rem);}
+  .hero h1 .red{color:var(--vermillion);}
+  .hero p.lede{font-size:1.18rem;max-width:46ch;color:var(--ink);margin:22px 0 30px;}
+  .hero p.lede em{font-style:italic;color:var(--field);font-weight:600;}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .hero-stats{display:flex;gap:30px;margin-top:34px;padding-top:24px;border-top:1px solid var(--rule);}
+  .stat .n{font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:900;font-size:1.9rem;line-height:1;}
+  .stat .l{font-size:.78rem;color:var(--slate);text-transform:uppercase;letter-spacing:.08em;margin-top:6px;}
+
+  /* ---------- TICKET / SLIP (signature element) ---------- */
+  .slip{
+    background:var(--bone-2);
+    border:2px solid var(--ink);
+    border-radius:3px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  /* perforation edge */
+  .slip::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:0;
+    border-top:2px dashed var(--ink);opacity:.0;
+  }
+  .perf{
+    height:14px;width:100%;
+    background:
+      radial-gradient(circle at 7px 14px, var(--bone) 5px, transparent 5.5px) 0 0/14px 14px repeat-x;
+    border-bottom:1px dashed rgba(22,20,18,.35);
+  }
+  .slip-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:2px solid var(--ink);}
+  .slip-head .title{font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.01em;font-size:1.05rem;}
+  .tag{font-family:"Roboto Mono",monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--ink);padding:4px 7px;border-radius:2px;display:inline-flex;align-items:center;gap:6px;}
+  .tag .live{width:7px;height:7px;border-radius:50%;background:var(--vermillion);}
+
+  /* leaderboard rows */
+  .lb-row{display:grid;grid-template-columns:34px 1fr auto auto;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--rule);}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-row .rank{font-family:"Roboto Mono",monospace;font-weight:700;color:var(--slate);}
+  .lb-row .name{font-weight:600;}
+  .lb-row .exact{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--slate);}
+  .lb-row .pts{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;font-size:1.05rem;text-align:right;min-width:48px;}
+  .lb-row.leader{background:var(--vermillion);color:var(--bone);position:relative;}
+  .lb-row.leader .rank,.lb-row.leader .exact{color:rgba(244,239,230,.85);}
+  .lb-row.leader .pts{color:var(--bone);}
+  .lb-row.leader .rank{color:var(--gold);}
+  .medal{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:0;}
+  .delta{font-family:"Roboto Mono",monospace;font-size:.72rem;font-weight:700;}
+  .delta.up{color:var(--field);}.delta.dn{color:var(--vermillion);}
+  .lb-row.leader .delta.up{color:var(--bone);}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:74px 0;border-bottom:2px solid var(--ink);}
+  .sec-head{max-width:60ch;margin-bottom:40px;}
+  .sec-head h2{font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(1.8rem,4vw,2.9rem);line-height:1;margin:10px 0 0;letter-spacing:-.01em;}
+  .sec-head p{color:var(--slate);font-size:1.05rem;margin-top:14px;}
+
+  /* problem -> solution: three editorial columns */
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:2px solid var(--ink);background:var(--bone-2);}
+  .col{padding:28px 24px;border-right:1px solid var(--ink);}
+  .col:last-child{border-right:none;}
+  .col .no{font-family:"Roboto Mono",monospace;font-size:.8rem;color:var(--vermillion);font-weight:700;letter-spacing:.1em;}
+  .col h3{font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:800;text-transform:uppercase;font-size:1.25rem;margin:10px 0 8px;line-height:1.05;}
+  .col p{color:var(--slate);font-size:.96rem;margin:0;}
+
+  /* match prediction row block */
+  .match-wrap{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start;}
+  .match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--rule);}
+  .match-row:last-child{border-bottom:none;}
+  .team{display:flex;align-items:center;gap:10px;font-weight:600;}
+  .team.away{justify-content:flex-end;text-align:right;}
+  .crest{width:26px;height:26px;border-radius:4px;border:1.5px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;font-family:"Roboto Mono",monospace;font-weight:700;font-size:.72rem;background:var(--bone);}
+  .pick{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums;font-weight:700;font-size:1.4rem;border:2px solid var(--ink);border-radius:3px;padding:4px 12px;background:var(--bone);min-width:78px;text-align:center;}
+  .pick.locked{background:var(--ink);color:var(--bone);}
+  .pick-meta{display:flex;justify-content:space-between;align-items:center;padding:10px 18px 0;}
+  .pick-meta .verdict{font-family:"Roboto Mono",monospace;font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;}
+  .verdict .hit{color:var(--field);font-weight:700;}
+  .verdict .miss{color:var(--vermillion);font-weight:700;}
+  .pts-chip{font-family:"Roboto Mono",monospace;font-weight:700;font-size:.8rem;border:1px solid var(--ink);border-radius:2px;padding:3px 8px;}
+  .pts-chip.win{background:var(--field);color:var(--bone);border-color:var(--field);}
+
+  /* testimonials */
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .quote{background:var(--bone-2);border:2px solid var(--ink);border-radius:3px;padding:24px;box-shadow:var(--shadow);}
+  .quote p{font-size:1.02rem;margin:0 0 18px;font-style:italic;}
+  .quote .who{display:flex;align-items:center;gap:12px;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--bone);display:flex;align-items:center;justify-content:center;font-family:"Roboto Mono",monospace;font-weight:700;font-size:.85rem;}
+  .who .nm{font-weight:700;font-size:.92rem;}
+  .who .rl{font-size:.78rem;color:var(--slate);}
+
+  /* final CTA */
+  .cta-final{background:var(--ink);color:var(--bone);text-align:center;border-bottom:none;}
+  .cta-final h2{font-family:"Archivo Expanded","Archivo",sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(2.2rem,6vw,4.4rem);line-height:.98;margin:0 auto;max-width:16ch;}
+  .cta-final h2 .red{color:var(--vermillion);}
+  .cta-final p{color:rgba(244,239,230,.72);max-width:48ch;margin:20px auto 32px;font-size:1.1rem;}
+  .cta-final .btn{background:var(--vermillion);border-color:var(--bone);}
+  .cta-final .btn:hover{box-shadow:4px 4px 0 var(--vermillion);}
+
+  footer{background:var(--ink);color:rgba(244,239,230,.6);padding:30px 0;}
+  .foot-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:.85rem;}
+  .foot-inner .wordmark{color:var(--bone);font-size:1.1rem;}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr;gap:40px;}
+    .match-wrap{grid-template-columns:1fr;}
+    .cols{grid-template-columns:1fr;}
+    .col{border-right:none;border-bottom:1px solid var(--ink);}
+    .col:last-child{border-bottom:none;}
+    .quotes{grid-template-columns:1fr;}
+  }
+  @media (max-width:720px){
+    nav.menu{
+      position:absolute;top:66px;left:0;right:0;
+      flex-direction:column;align-items:stretch;gap:0;
+      background:var(--bone);border-bottom:2px solid var(--ink);
+      padding:8px 24px 18px;display:none;
+    }
+    nav.menu.open{display:flex;}
+    nav.menu a{padding:14px 0;border-bottom:1px solid var(--rule);}
+    nav.menu .btn{margin-top:12px;justify-content:center;}
+    .hamburger{display:flex;}
+    .hero-stats{flex-wrap:wrap;gap:22px;}
+    section{padding:54px 0;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="wordmark" href="#top" aria-label="Pundit home">
+      <span class="dot" aria-hidden="true"></span>Pundit
+    </a>
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+      <span aria-hidden="true"></span>
+    </button>
+    <nav class="menu" id="menu" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#standings">Live standings</a>
+      <a href="#picks">Make a pick</a>
+      <a href="#voices">The pundits</a>
+      <a class="btn sm" href="#start">Start a pool</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="kicker">Run any prediction pool · By your house rules</span>
+        <h1 id="hero-h" class="display">Call it.<br>Score it.<br><span class="red">Never let them<br>forget it.</span></h1>
+        <p class="lede">Pundit runs your sports prediction pool by <em>your</em> house rules. Pick the scores, call the upsets, and settle once and for all who actually knows ball.</p>
+        <div class="hero-cta">
+          <a class="btn" href="#start">Start a pool →</a>
+          <a class="btn ghost" href="#standings">See a live board</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="n mono">27</div><div class="l">In the pool</div></div>
+          <div class="stat"><div class="n mono">72</div><div class="l">Games called</div></div>
+          <div class="stat"><div class="n mono">$3,900</div><div class="l">On the line</div></div>
+        </div>
+      </div>
+
+      <!-- HERO SLIP: live leaderboard (signature element) -->
+      <aside class="slip" aria-label="Sample live standings">
+        <div class="perf" aria-hidden="true"></div>
+        <div class="slip-head">
+          <span class="title">Live Standings</span>
+          <span class="tag"><span class="live" aria-hidden="true"></span>Week 03</span>
+        </div>
+        <div class="lb-row leader">
+          <span class="rank">01</span>
+          <span class="name"><span class="medal" style="background:var(--gold)" aria-hidden="true"></span> Marcus T.</span>
+          <span class="exact">14 exact</span>
+          <span class="pts">218</span>
+        </div>
+        <div class="lb-row">
+          <span class="rank">02</span>
+          <span class="name">Priya R.</span>
+          <span class="exact">12 exact</span>
+          <span class="pts">211</span>
+        </div>
+        <div class="lb-row">
+          <span class="rank">03</span>
+          <span class="name">Dani O. <span class="delta up" aria-label="up two places">▲2</span></span>
+          <span class="exact">13 exact</span>
+          <span class="pts">205</span>
+        </div>
+        <div class="lb-row">
+          <span class="rank">04</span>
+          <span class="name">Sam W. <span class="delta dn" aria-label="down one place">▼1</span></span>
+          <span class="exact">10 exact</span>
+          <span class="pts">198</span>
+        </div>
+        <div class="lb-row">
+          <span class="rank">05</span>
+          <span class="name">Leah K.</span>
+          <span class="exact">11 exact</span>
+          <span class="pts">191</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker">The whole game in three moves</span>
+        <h2 id="how-h">A pool is just data.<br>So spin one up in minutes.</h2>
+        <p>No spreadsheets, no arguments about the rules at 2am. Set your scoring once, drop in your crew, and let the board do the bragging.</p>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <span class="no">01 / SET THE RULES</span>
+          <h3>Your house, your tiers</h3>
+          <p>Exact score, right result, upset bonuses, prize pot — define how points are won. Pundit scores it the same way every week.</p>
+        </div>
+        <div class="col">
+          <span class="no">02 / CALL THE GAMES</span>
+          <h3>Lock your picks</h3>
+          <p>Everyone predicts every fixture before kickoff. Picks lock, the slip is on the record, and there's no taking it back.</p>
+        </div>
+        <div class="col">
+          <span class="no">03 / WATCH THE BOARD</span>
+          <h3>Climb or get cooked</h3>
+          <p>Results post, points settle, the standings reshuffle live. Someone's about to have a very good — or very bad — Sunday.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE STANDINGS + MATCH PICK -->
+  <section id="picks" aria-labelledby="picks-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker">Standings &amp; the slip</span>
+        <h2 id="picks-h">Every pick is on the record</h2>
+        <p>This is what a round looks like inside Pundit — a printed slip of predictions, scored against the real result, ranked against everyone else.</p>
+      </div>
+
+      <div class="match-wrap">
+        <!-- Match prediction slip -->
+        <div class="slip" id="standings">
+          <div class="perf" aria-hidden="true"></div>
+          <div class="slip-head">
+            <span class="title">Your Slip · Round 6</span>
+            <span class="tag">Locked</span>
+          </div>
+
+          <div class="match-row">
+            <span class="team"><span class="crest" aria-hidden="true">ARG</span> Argentina</span>
+            <span class="pick locked">2 – 1</span>
+            <span class="team away">Brazil <span class="crest" aria-hidden="true">BRA</span></span>
+          </div>
+          <div class="pick-meta">
+            <span class="verdict">Result 2–1 · <span class="hit">Exact hit</span></span>
+            <span class="pts-chip win">+5 pts</span>
+          </div>
+
+          <div class="match-row" style="margin-top:8px;">
+            <span class="team"><span class="crest" aria-hidden="true">FRA</span> France</span>
+            <span class="pick locked">1 – 1</span>
+            <span class="team away">Spain <span class="crest" aria-hidden="true">ESP</span></span>
+          </div>
+          <div class="pick-meta">
+            <span class="verdict">Result 0–2 · <span class="miss">Missed</span></span>
+            <span class="pts-chip">+0 pts</span>
+          </div>
+
+          <div class="match-row" style="margin-top:8px;">
+            <span class="team"><span class="crest" aria-hidden="true">POR</span> Portugal</span>
+            <span class="pick">3 – 0</span>
+            <span class="team away">Morocco <span class="crest" aria-hidden="true">MAR</span></span>
+          </div>
+          <div class="pick-meta">
+            <span class="verdict" style="color:var(--slate)">Kickoff 20:00 · Open</span>
+            <span class="pts-chip">— pts</span>
+          </div>
+        </div>
+
+        <!-- Mini board beside it -->
+        <div class="slip" aria-label="Round leaderboard">
+          <div class="perf" aria-hidden="true"></div>
+          <div class="slip-head">
+            <span class="title">Round 6 · Top Movers</span>
+            <span class="tag"><span class="live" aria-hidden="true"></span>Live</span>
+          </div>
+          <div class="lb-row leader">
+            <span class="rank">01</span>
+            <span class="name"><span class="medal" style="background:var(--gold)" aria-hidden="true"></span> Priya R. <span class="delta up" aria-label="up one place">▲1</span></span>
+            <span class="exact">+18 rd</span>
+            <span class="pts">229</span>
+          </div>
+          <div class="lb-row">
+            <span class="rank">02</span>
+            <span class="name">Marcus T. <span class="delta dn" aria-label="down one place">▼1</span></span>
+            <span class="exact">+11 rd</span>
+            <span class="pts">218</span>
+          </div>
+          <div class="lb-row">
+            <span class="rank">03</span>
+            <span class="name">Dani O.</span>
+            <span class="exact">+15 rd</span>
+            <span class="pts">205</span>
+          </div>
+          <div class="lb-row">
+            <span class="rank">04</span>
+            <span class="name">You <span class="delta up" aria-label="up three places">▲3</span></span>
+            <span class="exact">+14 rd</span>
+            <span class="pts">202</span>
+          </div>
+          <div class="lb-row">
+            <span class="rank">05</span>
+            <span class="name">Sam W. <span class="delta dn" aria-label="down two places">▼2</span></span>
+            <span class="exact">+6 rd</span>
+            <span class="pts">198</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="voices" aria-labelledby="voices-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="kicker">Word from the group chat</span>
+        <h2 id="voices-h">The pundits have spoken</h2>
+      </div>
+      <div class="quotes">
+        <figure class="quote">
+          <p>"Killed our 11-year-old spreadsheet in one afternoon. Nobody argues about scoring anymore — the board just decides."</p>
+          <figcaption class="who">
+            <span class="avatar" aria-hidden="true">FK</span>
+            <span><span class="nm">Fadi K.</span><br><span class="rl">Commissioner · World Cup Pool</span></span>
+          </figcaption>
+        </figure>
+        <figure class="quote">
+          <p>"I called three upsets nobody else saw and the upset bonus put me top. The screenshots write themselves."</p>
+          <figcaption class="who">
+            <span class="avatar" aria-hidden="true">PR</span>
+            <span><span class="nm">Priya R.</span><br><span class="rl">Reigning champ · Office League</span></span>
+          </figcaption>
+        </figure>
+        <figure class="quote">
+          <p>"Our pool has its own weird rules. Pundit just… ran them. Felt like the app was built for us."</p>
+          <figcaption class="who">
+            <span class="avatar" aria-hidden="true">SW</span>
+            <span><span class="nm">Sam W.</span><br><span class="rl">11th place &amp; rising</span></span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-final" id="start" aria-labelledby="start-h">
+    <div class="wrap">
+      <span class="kicker" style="color:var(--vermillion)">Free to start · Invite your crew</span>
+      <h2 id="start-h" class="display">Settle it on the <span class="red">board.</span></h2>
+      <p>Lock your picks before kickoff. Spin up a pool, pull in your group, and let the standings handle the trash talk.</p>
+      <a class="btn" href="#top">Start a pool — it's free →</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <span class="wordmark"><span class="dot" aria-hidden="true"></span>Pundit</span>
+    <span>Run any prediction pool, by your rules.</span>
+    <span class="mono">© 2026 Pundit</span>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var btn = document.getElementById('hamburger');
+    var menu = document.getElementById('menu');
+    if(!btn || !menu) return;
+    btn.addEventListener('click', function(){
+      var open = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    // close on nav link tap (mobile)
+    menu.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){
+        if(menu.classList.contains('open')){
+          menu.classList.remove('open');
+          btn.setAttribute('aria-expanded','false');
+          btn.setAttribute('aria-label','Open menu');
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>
