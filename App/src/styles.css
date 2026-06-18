@@ -409,3 +409,25 @@ select.picker {
 }
 .pennant--compact .pennant-kicker { display: inline; }
 .pennant--compact .pennant-champ { font-size: 0.92rem; }
+
+/* ---------- F09 — live group tables (A–L) ---------- */
+.grp-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 560px) { .grp-grid { grid-template-columns: 1fr 1fr; } }
+.grp-card { margin: 0; }
+.grp-table { padding: 4px 0 6px; }
+.grp-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3em 1.3em 1.3em 1.3em 2.2em 2em;
+  align-items: center; gap: 2px;
+  padding: 7px 14px; border-bottom: 1px solid var(--rule);
+  font-family: "Roboto Mono", monospace; font-size: 0.74rem; font-variant-numeric: tabular-nums;
+}
+.grp-row > span:not(.grp-team) { text-align: center; color: var(--slate); }
+.grp-row:last-child { border-bottom: none; }
+.grp-hd { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--slate); }
+.grp-hd .grp-team { color: var(--slate); }
+.grp-team { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.grp-team .nm { font-family: "Inter", system-ui, sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grp-pts { font-weight: 700; color: var(--ink) !important; }
+.grp-row.qual { background: var(--bone); box-shadow: inset 3px 0 0 var(--vermillion); }
+.grp-row.qual .grp-pts { color: var(--vermillion) !important; }

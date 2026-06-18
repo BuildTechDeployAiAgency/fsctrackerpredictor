@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
+import { buildGroups } from "./lib/groups.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
 import Flag from "./components/Flag.jsx";
@@ -161,10 +162,11 @@ export default function App() {
       {tab === "board" && <Board standings={standings} youRow={youRow} you={you} setYou={setYou} played={played} goals={goals} />}
       {tab === "games" && <Games results={results} setResult={setResult} you={you} isCommissioner={isCommissioner} canLogin={isShared} onLogin={commishLogin} onLogout={commishLogout} />}
       {tab === "players" && <Players standings={standings} results={results} you={you} setYou={setYou} />}
+      {tab === "groups" && <Groups results={results} />}
       {tab === "rules" && <Rules />}
 
       <nav className="tabbar" aria-label="Sections">
-        {[["board", "Table"], ["games", "Games"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
+        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
           <button key={id} className={tab === id ? "active" : ""} aria-current={tab === id} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -508,6 +510,47 @@ function Players({ standings, results, you, setYou }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ============================== GROUPS ==============================
+function Groups({ results }) {
+  const groups = useMemo(() => buildGroups(comp.games, results), [results]);
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <span className="kicker">Live group tables</span>
+        <h1>Groups</h1>
+        <p>Real standings (A–L) from entered results — played, W-D-L, goal diff, points. Top two qualify.</p>
+      </div>
+
+      <div className="grp-grid">
+        {groups.map(({ grp, rows }) => (
+          <div className="slip grp-card" key={grp}>
+            <div className="slip-head">
+              <span className="title">Group {grp}</span>
+              <span className="tag">{rows.reduce((s, r) => s + r.P, 0) / 2 || 0}/6</span>
+            </div>
+            <div className="grp-table">
+              <div className="grp-row grp-hd">
+                <span className="grp-team">Team</span>
+                <span>P</span><span>W</span><span>D</span><span>L</span>
+                <span>GD</span><span className="grp-pts">Pts</span>
+              </div>
+              {rows.map((r, i) => (
+                <div className={`grp-row${i < 2 ? " qual" : ""}`} key={r.team}>
+                  <span className="grp-team"><Flag team={r.team} size={18} /><span className="nm">{r.team}</span></span>
+                  <span>{r.P}</span><span>{r.W}</span><span>{r.D}</span><span>{r.L}</span>
+                  <span>{r.GD > 0 ? `+${r.GD}` : r.GD}</span>
+                  <span className="grp-pts">{r.Pts}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
