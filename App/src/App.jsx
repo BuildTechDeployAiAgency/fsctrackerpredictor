@@ -230,16 +230,28 @@ function Board({ standings, youRow, you, setYou, played, goals }) {
 }
 
 // ============================== GAMES ==============================
-const FILTERS = [["all", "All"], ["played", "Played"], ["upcoming", "Upcoming"]];
+const todayStr = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local
 
 function Games({ results, setResult, you, isCommissioner, canLogin, onLogin, onLogout }) {
-  const [filter, setFilter] = useState("all");
   const youIdx = comp.players.indexOf(you);
 
-  const list = comp.games.filter((g) => {
-    const has = !!results[g.n];
-    return filter === "all" || (filter === "played" ? has : !has);
-  });
+  // Split fixtures by the schedule, relative to today's date.
+  const { today, upcoming, past } = useMemo(() => {
+    const t = todayStr();
+    const buckets = { today: [], upcoming: [], past: [] };
+    for (const g of comp.games) {
+      if (g.d === t) buckets.today.push(g);
+      else if (g.d > t) buckets.upcoming.push(g);
+      else buckets.past.push(g);
+    }
+    return buckets;
+  }, []);
+
+  const sections = [
+    { id: "today", label: "Today", games: today, defaultOpen: true },
+    { id: "upcoming", label: "Upcoming", games: upcoming, defaultOpen: today.length === 0 },
+    { id: "past", label: "Past", games: past, defaultOpen: false },
+  ];
 
   return (
     <div className="page">
@@ -247,24 +259,33 @@ function Games({ results, setResult, you, isCommissioner, canLogin, onLogin, onL
         <span className="kicker">Fixtures &amp; results</span>
         <h1>Games</h1>
         <p>{isCommissioner
-          ? "All 72 group fixtures. Enter results as they come in — everyone's picks score automatically."
-          : "All 72 group fixtures. Results are entered by the commissioner; the board updates live."}</p>
+          ? "Fixtures by the schedule — today, upcoming, past. Enter results as they come in; picks score automatically."
+          : "Fixtures by the schedule — today, upcoming, past. Results are entered by the commissioner; the board updates live."}</p>
       </div>
 
       {canLogin && <CommishBar isCommissioner={isCommissioner} onLogin={onLogin} onLogout={onLogout} />}
 
-      <div className="status" style={{ gap: 6, justifyContent: "flex-start" }}>
-        {FILTERS.map(([id, label]) => (
-          <button key={id} className={`linkish`} style={{ color: filter === id ? "var(--vermillion)" : "var(--slate)" }} onClick={() => setFilter(id)}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {list.map((g) => (
-        <GameCard key={g.n} g={g} result={results[g.n]} setResult={setResult} youIdx={youIdx} canEdit={isCommissioner} />
+      {sections.filter((s) => s.games.length).map((s) => (
+        <GamesSection key={s.id} label={s.label} games={s.games} defaultOpen={s.defaultOpen}
+          results={results} setResult={setResult} youIdx={youIdx} canEdit={isCommissioner} />
       ))}
     </div>
+  );
+}
+
+function GamesSection({ label, games, defaultOpen, results, setResult, youIdx, canEdit }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="games-sec">
+      <button className={`games-sec-head${open ? " open" : ""}`} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <span className="arrow" aria-hidden="true">{open ? "▾" : "▸"}</span>
+        <span className="games-sec-title">{label}</span>
+        <span className="games-sec-count mono">{games.length}</span>
+      </button>
+      {open && games.map((g) => (
+        <GameCard key={g.n} g={g} result={results[g.n]} setResult={setResult} youIdx={youIdx} canEdit={canEdit} />
+      ))}
+    </section>
   );
 }
 
@@ -369,8 +390,8 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
         <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {sc && <span className={`pts-chip${sc.tier === "exact" ? " exact" : sc.tier === "result" ? " win" : ""}`}>+{sc.pts}</span>}
           {canEdit && <button className="linkish" onClick={() => setEditing((v) => !v)}>{result ? "Edit" : "Set result"}</button>}
-          <button className="linkish" onClick={() => setShowSim((v) => !v)}>{showSim ? "Hide" : "What if"}</button>
-          <button className="linkish" onClick={() => setShowPicks((v) => !v)}>{showPicks ? "Hide" : "All picks"}</button>
+          <button className="linkish toggle" aria-expanded={showSim} onClick={() => setShowSim((v) => !v)}><span className="caret" aria-hidden="true">{showSim ? "▾" : "▸"}</span>What if</button>
+          <button className="linkish toggle" aria-expanded={showPicks} onClick={() => setShowPicks((v) => !v)}><span className="caret" aria-hidden="true">{showPicks ? "▾" : "▸"}</span>All picks</button>
         </span>
       </div>
 
@@ -430,12 +451,14 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
 
 // ============================== PLAYERS ==============================
 function Players({ standings, results, you, setYou }) {
-  const [sel, setSel] = useState(you);
+  const [sel, setSel] = useState(""); // start empty — user picks who to view
   const row = standings.find((r) => r.name === sel);
   const idx = comp.players.indexOf(sel);
-  const scored = comp.games
-    .filter((g) => results[g.n])
-    .map((g) => ({ g, pick: g.p[idx], res: results[g.n], ...scoreOne(g.p[idx], results[g.n], TIERS) }));
+  const scored = sel
+    ? comp.games
+        .filter((g) => results[g.n])
+        .map((g) => ({ g, pick: g.p[idx], res: results[g.n], ...scoreOne(g.p[idx], results[g.n], TIERS) }))
+    : [];
 
   return (
     <div className="page">
@@ -446,8 +469,15 @@ function Players({ standings, results, you, setYou }) {
       </div>
 
       <select className="picker" value={sel} onChange={(e) => setSel(e.target.value)} style={{ marginBottom: 16 }} aria-label="Select player">
-        {comp.players.map((p) => <option key={p} value={p}>{p}</option>)}
+        <option value="" disabled>Select a player…</option>
+        {comp.players.map((p) => <option key={p} value={p}>{p}{p === you ? " (you)" : ""}</option>)}
       </select>
+
+      {!sel && (
+        <div className="empty-pick">
+          <p>Choose a player above to see their rank, totals, and every scored pick.</p>
+        </div>
+      )}
 
       {row && (
         <>
