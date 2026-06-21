@@ -116,7 +116,7 @@ export const scoring = {
     // 90-minute states. See README for the full rule book.
   ],
   // Season adjustments reconciled against the official master sheet.
-  adjustments: { "Majd": 1, "Ghassan": 1, "Nadim": 1, "Roger": 1 },
+  adjustments: { "Majd": 1, "Ghassan": 1, "Nadim": 2, "Roger": 1 },
   // Official tiebreak order (from the master sheet) for level-on-points ties.
   tiebreakSeed: ["Fadi C","KC","Patrick","Majd","Razek","Imad","S & R","Simon","Elias Kh","Maria","Mazen","Mo Man","Jawad","Nawaf","Diogo","Rami M","Salim","Nadim","Kawkab","Milo","Mark K","ISK","Roger","Ghassan","Barbar","M. Saada","Hani"],
 };
