@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="WC Tracker">
-  <!-- Sports Almanac theme: ink ground, vermillion accent, cream monogram -->
-  <rect width="1024" height="1024" fill="#161412"/>
+  <!-- Sports Almanac theme: vermillion ground, cream monogram, ink accent -->
+  <rect width="1024" height="1024" fill="#e63920"/>
   <!-- editorial inset frame (ticket vibe) -->
-  <rect x="96" y="96" width="832" height="832" rx="40" fill="none" stroke="#f4efe6" stroke-opacity="0.16" stroke-width="8"/>
+  <rect x="96" y="96" width="832" height="832" rx="40" fill="none" stroke="#f4efe6" stroke-opacity="0.30" stroke-width="8"/>
   <!-- signature brand dot (top-right, above the C — reads as accent, not an 'i') -->
-  <circle cx="800" cy="250" r="52" fill="#e63920"/>
+  <circle cx="800" cy="250" r="52" fill="#161412"/>
   <!-- WC monogram, stroked paths (font-free, identical on every renderer) -->
   <g fill="none" stroke="#f4efe6" stroke-width="112" stroke-linejoin="round" stroke-linecap="round">
     <path d="M168 372 L256 716 L356 512 L456 716 L544 372"/>
     <path d="M848 452 A150 150 0 1 0 848 632"/>
   </g>
-  <!-- vermillion baseline rule + tick -->
-  <rect x="168" y="792" width="688" height="26" rx="6" fill="#e63920"/>
+  <!-- baseline rule + tick -->
+  <rect x="168" y="792" width="688" height="26" rx="6" fill="#161412"/>
   <rect x="168" y="792" width="150" height="26" rx="6" fill="#f4efe6"/>
 </svg>
