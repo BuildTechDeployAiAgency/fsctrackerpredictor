@@ -1,9 +1,9 @@
 {
-  "name": "fadi-wc-pool",
+  "name": "wc-theme-tracker",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Fadi's World Cup Pool 2026 — a simple mobile-first web app for the friends pool. Self-contained: React + Vite, no backend.",
+  "description": "World Cup Theme Tracker — a simple mobile-first web app for the prediction pool. Self-contained: React + Vite, no backend.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

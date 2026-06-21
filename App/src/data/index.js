@@ -1,4 +1,4 @@
-// Single competition for this friends app: Fadi's World Cup Pool 2026.
+// Single competition for this app: World Cup Theme Tracker.
 // (Kept as a registry so adding another season/competition later is one file.)
 
 import wc2026 from "./wc2026.js";

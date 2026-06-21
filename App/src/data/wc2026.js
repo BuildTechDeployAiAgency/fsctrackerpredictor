@@ -1,5 +1,5 @@
 // ============================================================
-// Competition config: Fadi's World Cup Pool 2026
+// Competition config: World Cup Theme Tracker
 // A 30-year prediction tradition. This single file fully describes
 // one competition — swap it (or add siblings) to run any sport/league.
 //
@@ -9,8 +9,8 @@
 // ============================================================
 
 export const meta = {
-  id: "wc2026-fadi",
-  name: "Fadi's World Cup Pool 2026",
+  id: "wc2026",
+  name: "World Cup Theme Tracker",
   sport: "football",
   tagline: "A 30-year prediction tradition \u00b7 27 players \u00b7 all 104 matches",
   totalGames: 72,            // group stage (extend to 104 for full tournament)
@@ -177,7 +177,7 @@ export const rules = {
       ],
     },
   ],
-  credit: "\u00a9 Fadi S. Chammas 1996\u20132026 \u00b7 Programming: Fadi S. Chammas & Saad Kanawati",
+  credit: "",
 };
 
 export default { meta, players, games, results, scoring, rules };

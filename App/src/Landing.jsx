@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const PASSCODE = import.meta.env.VITE_APP_PASSCODE || "fadi26";
 
-// Full "Sports Almanac" marketing landing for Fadi's World Cup Pool.
+// Full "Sports Almanac" marketing landing for the World Cup Theme Tracker.
 // Receives the live standings so the hero board is real, not mocked.
 // `onEnter(name)` flips the app into the tabbed view with that player as "you".
 export default function Landing({ comp, standings, defaultName, onEnter }) {
@@ -28,8 +28,8 @@ export default function Landing({ comp, standings, defaultName, onEnter }) {
       {/* ---------- NAV ---------- */}
       <header className="lp-nav">
         <div className="wrap lp-nav-inner">
-          <a className="lp-wordmark" href="#top" aria-label="Fadi's World Cup Pool home" onClick={closeMenu}>
-            <span className="dot" aria-hidden="true" />FADI<span className="red">'26</span>
+          <a className="lp-wordmark" href="#top" aria-label="World Cup Theme Tracker home" onClick={closeMenu}>
+            <span className="dot" aria-hidden="true" />WC<span className="red">&nbsp;TRACKER</span>
           </a>
           <button
             className="lp-hamburger"
@@ -161,7 +161,7 @@ export default function Landing({ comp, standings, defaultName, onEnter }) {
 
       <footer className="lp-footer">
         <div className="wrap lp-foot-inner">
-          <span className="lp-wordmark"><span className="dot" aria-hidden="true" />FADI<span className="red">'26</span></span>
+          <span className="lp-wordmark"><span className="dot" aria-hidden="true" />WC<span className="red">&nbsp;TRACKER</span></span>
           <span>{comp.meta.name}</span>
           <span className="mono">{comp.rules.credit}</span>
         </div>

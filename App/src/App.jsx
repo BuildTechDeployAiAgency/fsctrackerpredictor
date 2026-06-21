@@ -144,7 +144,7 @@ export default function App() {
     <div className="app">
       <header className="masthead">
         <div className="masthead-top">
-          <div className="wordmark"><span className="dot" aria-hidden="true" />{comp.meta.name.replace(" 2026 pool", "").replace("'s World Cup Pool 2026", "")}<span style={{ color: "var(--vermillion)" }}>'26</span></div>
+          <div className="wordmark"><span className="dot" aria-hidden="true" />WC<span style={{ color: "var(--vermillion)" }}>&nbsp;TRACKER</span></div>
           <span className="whoami mono" title="You — tap a name on the Table to change">
             <span className="whoami-l">YOU</span>{you}
           </span>
