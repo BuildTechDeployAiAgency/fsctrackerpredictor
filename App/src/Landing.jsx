@@ -9,7 +9,8 @@ export default function Landing({ comp, standings, defaultName, onEnter }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [pass, setPass] = useState("");
-  const [name, setName] = useState(defaultName || comp.meta.highlightPlayer || comp.players[0]);
+  // Force each player to pick themselves at login — that choice becomes "you".
+  const [name, setName] = useState("");
   const [err, setErr] = useState("");
 
   const top5 = standings.slice(0, 5);
@@ -192,6 +193,7 @@ export default function Landing({ comp, standings, defaultName, onEnter }) {
               <label className="gate-field">
                 <span className="gate-label">You are</span>
                 <select className="picker" value={name} onChange={(e) => setName(e.target.value)}>
+                  <option value="" disabled>Select your name…</option>
                   {comp.players.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </label>
