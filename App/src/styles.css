@@ -217,6 +217,16 @@ select.picker {
 .rrow .rl span { color: var(--slate); font-size: 0.85rem; }
 .credit { font-family: "Roboto Mono", monospace; font-size: 0.68rem; color: var(--slate); margin-top: 20px; }
 
+/* ---------- Post-90 manual adjustments ---------- */
+.p90-slip { margin-bottom: 16px; border-left: 3px solid var(--vermillion); }
+.p90-note { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 12px; }
+.p90-tag {
+  font-family: "Roboto Mono", monospace; font-size: 0.66rem; line-height: 1.2;
+  color: var(--vermillion); background: color-mix(in srgb, var(--vermillion) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vermillion) 35%, transparent);
+  border-radius: 4px; padding: 3px 7px; white-space: nowrap;
+}
+
 /* ---------- Bottom tab bar ---------- */
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;

@@ -4,6 +4,8 @@ import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { buildGroups } from "./lib/groups.js";
 import { resolveBracket, bracketProgress } from "./lib/bracket.js";
 import { knockout } from "./data/knockout.js";
+import postNinety from "./data/postNinety.js";
+import { mergeAdjustments, postNinetyFor, postNinetyForGame } from "./lib/postNinety.js";
 import { isShared, fetchResults, upsertResult, deleteResult, subscribeResults, verifyCommissioner } from "./lib/supabase.js";
 import Landing from "./Landing.jsx";
 import Flag from "./components/Flag.jsx";
@@ -12,6 +14,15 @@ import ChampionPennant from "./components/ChampionPennant.jsx";
 const comp = getCompetition();
 const TOTAL = comp.meta.totalGames || comp.games.length;
 const TIERS = comp.scoring.tiers;
+
+// Standings competition: identical to `comp` but with post-90 manual
+// adjustments layered onto the base adjustments. With an empty post-90 list
+// this is a no-op and standings match the pure engine output. The protected
+// engine (scoring.js) and data (wc2026.js) are never mutated.
+const scoringComp = {
+  ...comp,
+  scoring: { ...comp.scoring, adjustments: mergeAdjustments(comp.scoring.adjustments, postNinety) },
+};
 
 // ---- tiny helpers ----
 const crest = (team) => team.replace(/[^A-Za-z ]/g, "").slice(0, 3).toUpperCase();
@@ -100,7 +111,7 @@ export default function App() {
     return () => { active = false; unsub(); };
   }, []);
 
-  const standings = useMemo(() => buildStandings(comp, results), [results]);
+  const standings = useMemo(() => buildStandings(scoringComp, results), [results]);
   const youRow = standings.find((r) => r.name === you);
   const played = gamesPlayed(results);
   const goals = useMemo(
@@ -355,6 +366,7 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
 
   const pick = g.p[youIdx];
   const sc = result ? scoreOne(pick, result, TIERS) : null;
+  const p90 = postNinetyForGame(g.n);
 
   // What-if simulator (read-only, never writes). Scores YOUR pick against a
   // hypothetical scoreline AND tallies how the whole pool would score it.
@@ -401,6 +413,14 @@ function GameCard({ g, result, setResult, youIdx, canEdit }) {
           <button className="linkish toggle" aria-expanded={showPicks} onClick={() => setShowPicks((v) => !v)}><span className="caret" aria-hidden="true">{showPicks ? "▾" : "▸"}</span>All picks</button>
         </span>
       </div>
+
+      {p90.length > 0 && (
+        <div className="p90-note">
+          {p90.map((e, i) => (
+            <span key={i} className="p90-tag">⏱ +{e.pts} {e.player} — {e.type === "outcome" ? "knockout outcome" : "90:00 heartbreak"}</span>
+          ))}
+        </div>
+      )}
 
       {showSim && (
         <div className="sim">
@@ -461,6 +481,7 @@ function Players({ standings, results, you, setYou }) {
   const [sel, setSel] = useState(""); // start empty — user picks who to view
   const row = standings.find((r) => r.name === sel);
   const idx = comp.players.indexOf(sel);
+  const p90 = sel ? postNinetyFor(sel) : [];
   const scored = sel
     ? comp.games
         .filter((g) => results[g.n])
@@ -497,6 +518,22 @@ function Players({ standings, results, you, setYou }) {
           </div>
           {sel !== you && (
             <button className="btn sm" style={{ marginBottom: 16 }} onClick={() => setYou(sel)}>Make {sel} "you"</button>
+          )}
+
+          {p90.length > 0 && (
+            <div className="slip p90-slip">
+              <div className="slip-head">
+                <span className="title">⏱ Post-90 adjustments</span>
+                <span className="tag">+{p90.reduce((s, e) => s + e.pts, 0)} pts</span>
+              </div>
+              {p90.map((e, i) => (
+                <div className="match-row" key={i} style={{ borderBottom: "1px solid var(--rule)" }}>
+                  <span className="team"><span className="nm">Game {e.game} · {e.type === "outcome" ? "Knockout outcome" : "90:00 heartbreak"}</span></span>
+                  <span className="mono" style={{ fontSize: ".75rem", color: "var(--slate)" }}>{e.note}</span>
+                  <span className="pts-chip win" style={{ justifySelf: "end" }}>+{e.pts}</span>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className="slip">
