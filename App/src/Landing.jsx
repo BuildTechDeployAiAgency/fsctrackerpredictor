@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const PASSCODE = import.meta.env.VITE_APP_PASSCODE || "fadi26";
+const PASSCODE = import.meta.env.VITE_APP_PASSCODE || "goal26";
 
 // Full "Sports Almanac" marketing landing for the World Cup Theme Tracker.
 // Receives the live standings so the hero board is real, not mocked.
