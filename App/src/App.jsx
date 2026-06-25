@@ -182,7 +182,7 @@ export default function App() {
       {tab === "rules" && <Rules />}
 
       <nav className="tabbar" aria-label="Sections">
-        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["thirds", "3rd"], ["bracket", "Cup"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
+        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["thirds", "3rd"], ["bracket", "Knockouts"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
           <button key={id} className={tab === id ? "active" : ""} aria-current={tab === id} onClick={() => setTab(id)}>
             {label}
           </button>
