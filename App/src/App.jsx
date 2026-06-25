@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getCompetition } from "./data/index.js";
 import { buildStandings, scoreOne, gamesPlayed } from "./lib/scoring.js";
 import { buildGroups } from "./lib/groups.js";
+import { bestThirds } from "./lib/thirds.js";
 import { resolveBracket, bracketProgress } from "./lib/bracket.js";
 import { knockout } from "./data/knockout.js";
 import postNinety from "./data/postNinety.js";
@@ -176,11 +177,12 @@ export default function App() {
       {tab === "games" && <Games results={results} setResult={setResult} you={you} isCommissioner={isCommissioner} canLogin={isShared} onLogin={commishLogin} onLogout={commishLogout} />}
       {tab === "players" && <Players standings={standings} results={results} you={you} setYou={setYou} />}
       {tab === "groups" && <Groups results={results} />}
+      {tab === "thirds" && <Thirds results={results} />}
       {tab === "bracket" && <Bracket results={results} you={you} />}
       {tab === "rules" && <Rules />}
 
       <nav className="tabbar" aria-label="Sections">
-        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["bracket", "Cup"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
+        {[["board", "Table"], ["games", "Games"], ["groups", "Groups"], ["thirds", "3rd"], ["bracket", "Cup"], ["players", "Players"], ["rules", "Rules"]].map(([id, label]) => (
           <button key={id} className={tab === id ? "active" : ""} aria-current={tab === id} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -591,6 +593,66 @@ function Groups({ results }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ============================== THIRD PLACE ==============================
+// Live table of the twelve third-placed teams. Top 8 advance to the R32.
+function Thirds({ results }) {
+  const thirds = useMemo(() => {
+    const groups = buildGroups(comp.games, results);
+    return bestThirds(groups, 8);
+  }, [results]);
+
+  const playedCount = thirds.filter((t) => t.P > 0).length;
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <span className="kicker">Best third-placed teams</span>
+        <h1>Third Place</h1>
+        <p>The 12 group runner-ups' chasers, ranked. The <b>top 8</b> third-placed
+          sides qualify for the Round of 32 — Pts, then goal difference, then goals scored.</p>
+      </div>
+
+      <div className="status">
+        <span><b>{playedCount}</b> / 12 sides started</span>
+        <span>Qualify: <b>top 8</b></span>
+      </div>
+
+      <div className="slip">
+        <div className="perf" aria-hidden="true" />
+        <div className="slip-head">
+          <span className="title">Third-Place Standings</span>
+          <span className="tag"><span className="live" aria-hidden="true" />8 qualify</span>
+        </div>
+        <div className="grp-table">
+          <div className="third-row grp-hd">
+            <span className="third-rank">#</span>
+            <span className="grp-team">Team</span>
+            <span>Grp</span><span>P</span>
+            <span>GD</span><span className="grp-pts">Pts</span>
+          </div>
+          {thirds.map((t) => (
+            <div
+              className={`third-row${t.qualified ? " qual" : ""}${t.rank === 8 ? " cutoff" : ""}`}
+              key={t.team}
+            >
+              <span className="third-rank">{t.rank}</span>
+              <span className="grp-team"><Flag team={t.team} size={18} /><span className="nm">{t.team}</span></span>
+              <span className="third-grp">{t.grp}</span>
+              <span>{t.P}</span>
+              <span>{t.GD > 0 ? `+${t.GD}` : t.GD}</span>
+              <span className="grp-pts">{t.Pts}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="kicker" style={{ textAlign: "center" }}>
+        Vermillion = qualifying · line under #8 is the cut. Updates live as results land.
+      </p>
     </div>
   );
 }

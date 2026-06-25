@@ -442,6 +442,24 @@ select.picker {
 .grp-row.qual { background: var(--bone); box-shadow: inset 3px 0 0 var(--vermillion); }
 .grp-row.qual .grp-pts { color: var(--vermillion) !important; }
 
+/* ---------- Third-place standings (best 8 qualify) ---------- */
+.third-row {
+  display: grid;
+  grid-template-columns: 1.6em 1fr 2em 1.3em 2.2em 2em;
+  align-items: center; gap: 2px;
+  padding: 7px 14px; border-bottom: 1px solid var(--rule);
+  font-family: "Roboto Mono", monospace; font-size: 0.74rem; font-variant-numeric: tabular-nums;
+}
+.third-row > span:not(.grp-team) { text-align: center; color: var(--slate); }
+.third-row:last-child { border-bottom: none; }
+.third-rank { font-weight: 700; color: var(--ink) !important; }
+.third-grp { font-weight: 700; color: var(--vermillion) !important; }
+.third-row.qual { background: var(--bone); box-shadow: inset 3px 0 0 var(--vermillion); }
+.third-row.qual .third-rank,
+.third-row.qual .grp-pts { color: var(--vermillion) !important; }
+/* the cut line: heavier rule under the 8th (last qualifying) side */
+.third-row.cutoff { border-bottom: 2px solid var(--ink); }
+
 /* ---------- F08 — knockout bracket (vertical, display-only) ---------- */
 .ko-round { margin-bottom: 12px; }
 .ko-head { width: 100%; cursor: pointer; background: none; border: none; text-align: left; font: inherit; }
