@@ -1,0 +1,108 @@
+# Manually publish a final score to the shared board (GitHub Actions).
+#
+# This is a MANUAL trigger (workflow_dispatch) — not an automatic scraper.
+# A human supplies the final score; the job writes it to Supabase through the
+# same commissioner-gated RPC the app uses (set_result / clear_result), so all
+# 27 phones update live via realtime. It's a reliable, logged alternative to
+# typing the score on a phone.
+#
+# One-time setup — add these repo secrets (Settings → Secrets and variables →
+# Actions → New repository secret):
+#   SUPABASE_URL            e.g. https://YOUR-REF.supabase.co
+#   SUPABASE_ANON_KEY       the anon/publishable key (NOT service_role)
+#   COMMISSIONER_PASSCODE   the commissioner passcode (validated server-side)
+#
+# To run: Actions tab → "Publish match result" → Run workflow → fill the form.
+
+name: Publish match result
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "set = publish/overwrite a score · clear = remove a score"
+        type: choice
+        required: true
+        default: set
+        options:
+          - set
+          - clear
+      game_no:
+        description: "Game number (games[].n in src/data/wc2026.js), 1-104"
+        type: string
+        required: true
+      home:
+        description: "Home goals (required for set; ignored for clear)"
+        type: string
+        required: false
+      away:
+        description: "Away goals (required for set; ignored for clear)"
+        type: string
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          re='^[0-9]+$'
+          if ! [[ "${{ inputs.game_no }}" =~ $re ]]; then
+            echo "::error::game_no must be a whole number"; exit 1
+          fi
+          if (( ${{ inputs.game_no }} < 1 || ${{ inputs.game_no }} > 104 )); then
+            echo "::error::game_no must be between 1 and 104"; exit 1
+          fi
+          if [[ "${{ inputs.mode }}" == "set" ]]; then
+            if ! [[ "${{ inputs.home }}" =~ $re ]] || ! [[ "${{ inputs.away }}" =~ $re ]]; then
+              echo "::error::set mode needs whole-number home and away goals"; exit 1
+            fi
+          fi
+
+      - name: Check secrets are configured
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          COMMISSIONER_PASSCODE: ${{ secrets.COMMISSIONER_PASSCODE }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in SUPABASE_URL SUPABASE_ANON_KEY COMMISSIONER_PASSCODE; do
+            if [[ -z "${!v:-}" ]]; then echo "::error::Missing secret: $v"; missing=1; fi
+          done
+          [[ $missing -eq 0 ]] || { echo "Add the secrets listed in the workflow header."; exit 1; }
+
+      - name: Publish to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          COMMISSIONER_PASSCODE: ${{ secrets.COMMISSIONER_PASSCODE }}
+        run: |
+          set -euo pipefail
+          base="${SUPABASE_URL%/}/rest/v1/rpc"
+          if [[ "${{ inputs.mode }}" == "set" ]]; then
+            fn="set_result"
+            body=$(printf '{"p_game_no":%s,"p_home":%s,"p_away":%s,"p_passcode":"%s"}' \
+              "${{ inputs.game_no }}" "${{ inputs.home }}" "${{ inputs.away }}" "$COMMISSIONER_PASSCODE")
+            echo "Setting game ${{ inputs.game_no }} -> ${{ inputs.home }}:${{ inputs.away }}"
+          else
+            fn="clear_result"
+            body=$(printf '{"p_game_no":%s,"p_passcode":"%s"}' \
+              "${{ inputs.game_no }}" "$COMMISSIONER_PASSCODE")
+            echo "Clearing game ${{ inputs.game_no }}"
+          fi
+
+          # -f makes curl exit non-zero on HTTP >=400 (e.g. 42501 unauthorized => 4xx).
+          http=$(curl -sS -w '%{http_code}' -o /tmp/resp.txt -X POST "$base/$fn" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            --data "$body") || true
+
+          echo "HTTP $http"; cat /tmp/resp.txt || true
+          if [[ "$http" -lt 200 || "$http" -ge 300 ]]; then
+            echo "::error::Supabase rejected the write (HTTP $http). A 4xx usually means the commissioner passcode is wrong."
+            exit 1
+          fi
+          echo "Done — the shared board updates live for everyone."
