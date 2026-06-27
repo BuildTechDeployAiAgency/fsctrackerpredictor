@@ -1,0 +1,77 @@
+-- Migration: seed/refresh live results to match the commissioner board
+-- Source of truth: the live FSC Cup tracker (soccergurus.netlify.app, Firebase
+-- doc appstate/fsc26data), 2026 World Cup. 64 games at capture time.
+--
+-- NOTE: results are still being entered during the tournament, so this is a
+-- point-in-time snapshot. Re-run App/scripts/validate-vs-gurus.mjs to see live
+-- divergence; regenerate this file (or build a sync job) to refresh.
+--
+-- Idempotent upsert. Does NOT touch scoring.js or wc2026.js.
+
+insert into public.results (game_no, home, away) values
+  (1, 2, 0),
+  (2, 2, 1),
+  (3, 1, 1),
+  (4, 4, 1),
+  (5, 1, 1),
+  (6, 1, 1),
+  (7, 0, 1),
+  (8, 2, 0),
+  (9, 7, 1),
+  (10, 2, 2),
+  (11, 1, 0),
+  (12, 5, 1),
+  (13, 0, 0),
+  (14, 1, 1),
+  (15, 1, 1),
+  (16, 2, 2),
+  (17, 3, 1),
+  (18, 1, 4),
+  (19, 3, 0),
+  (20, 3, 1),
+  (21, 1, 1),
+  (22, 4, 2),
+  (23, 1, 0),
+  (24, 1, 3),
+  (25, 1, 1),
+  (26, 4, 1),
+  (27, 6, 0),
+  (28, 1, 0),
+  (29, 2, 0),
+  (30, 0, 1),
+  (31, 3, 0),
+  (32, 0, 1),
+  (33, 5, 1),
+  (34, 2, 1),
+  (35, 0, 0),
+  (36, 0, 4),
+  (37, 4, 0),
+  (38, 0, 0),
+  (39, 2, 2),
+  (40, 1, 3),
+  (41, 2, 0),
+  (42, 3, 0),
+  (43, 3, 2),
+  (44, 1, 2),
+  (45, 5, 0),
+  (46, 0, 0),
+  (47, 0, 1),
+  (48, 1, 0),
+  (49, 2, 1),
+  (50, 3, 1),
+  (51, 4, 2),
+  (52, 0, 3),
+  (53, 1, 0),
+  (54, 0, 3),
+  (55, 0, 2),
+  (56, 2, 1),
+  (57, 1, 3),
+  (58, 1, 1),
+  (59, 3, 2),
+  (60, 0, 0),
+  (61, 1, 4),
+  (62, 5, 0),
+  (63, 0, 0),
+  (64, 0, 1)
+on conflict (game_no) do update
+  set home = excluded.home, away = excluded.away;
